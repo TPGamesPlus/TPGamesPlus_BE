@@ -58,7 +58,7 @@ All endpoints except login/refresh/docs require `Authorization: Bearer <access_t
 |---|---|---|
 | POST | `/api/auth/login/` | body `{"username", "password"}` → `{access, refresh}` |
 | POST | `/api/auth/refresh/` | body `{"refresh"}` → `{access}` |
-| GET | `/api/products/` | `?page=&page_size=&location=JO\|SA` (page_size default 10, max 50) |
+| GET | `/api/products/` | `?page=&page_size=&location=JO\|SA&title=&min_price=&max_price=&ordering=price\|-price` (page_size default 10, max 50). Response includes `facets: {titles, min_price, max_price}` |
 | GET | `/api/products/{id}/` | product detail |
 | POST | `/api/orders/` | body `{"product": <id>}` → creates an order, returns a receipt |
 | GET | `/api/orders/{id}/` | re-fetch a receipt (only your own orders; 404 otherwise) |
@@ -75,6 +75,10 @@ curl -X POST http://127.0.0.1:8000/api/auth/login/ \
 
 # List products (JO only, page 2)
 curl "http://127.0.0.1:8000/api/products/?location=JO&page=2" \
+  -H "Authorization: Bearer <access_token>"
+
+# List products (title + price range + sort)
+curl "http://127.0.0.1:8000/api/products/?title=Sword%20of%20Valor&min_price=150&max_price=200&ordering=price" \
   -H "Authorization: Bearer <access_token>"
 
 # Product detail
@@ -109,4 +113,5 @@ Error responses are normalized to:
 - **Product reads are served from an in-process map** (`catalog/store.py`: `{id: json_string}` + a location index), rebuilt at startup and after every re-import, instead of hitting the DB (or a cache framework/Redis) on every request. This was chosen over Redis to avoid extra infrastructure for now; the trade-off is the map is per-process, so it isn't shared across multiple worker processes without adding a shared cache later.
 - **JWT lifetimes**: access tokens expire after 30 minutes, refresh tokens after 1 day (`SIMPLE_JWT` in `core/settings.py`).
 - **Product list `page_size` is capped at 50** (`core/pagination.py`) so a caller can't request an unbounded result set.
+- **Product list filters** (`title`, `min_price`, `max_price`, `ordering=price|-price`) run on the in-memory catalog **before** pagination. The same response includes `facets` so the UI can populate a title dropdown and price slider without shrinking those controls when a price range is applied.
 - **Login is rate-limited** (`AnonRateThrottle`, 5/min) as basic brute-force protection, since credentials are the only gate into the API.
