@@ -1,7 +1,6 @@
 import pytest
 from rest_framework import status
 
-from catalog import store
 from catalog.models import Product
 
 
@@ -16,7 +15,6 @@ def seed_products(db):
             price="9.99",
             location="JO" if i % 2 else "SA",
         )
-    store.load_products()  # views read from the in-process map, not the DB
     yield
 
 
@@ -39,7 +37,6 @@ def seed_filter_products(db):
             price=price,
             location=location,
         )
-    store.load_products()
     yield
 
 

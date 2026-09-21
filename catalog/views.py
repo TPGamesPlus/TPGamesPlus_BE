@@ -3,14 +3,14 @@ from rest_framework import viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
-from catalog import store
 from catalog.listing import build_facets, filter_products, parse_list_query
+from catalog.models import Product
 from catalog.serializers import ProductDetailSerializer, ProductListSerializer
 from core.pagination import StandardResultsSetPagination
 
 
 class ProductViewSet(viewsets.ViewSet):
-    """Read-only product catalog served from the in-process map in catalog/store.py (no per-request DB hit)."""
+    """Read-only product catalog served from PostgreSQL."""
 
     pagination_class = StandardResultsSetPagination
 
@@ -39,8 +39,9 @@ class ProductViewSet(viewsets.ViewSet):
         if location is not None:
             location = location.strip() or None
         params = parse_list_query(request.query_params)
-        # already id-ordered, see store.load_products
-        products = store.list_products(location=location)
+        products = Product.objects.all().order_by("id")
+        if location:
+            products = products.filter(location=location)
         facets = build_facets(products, title=params["title"])
         products = filter_products(products, **params)
         paginator = self.pagination_class()
@@ -75,9 +76,10 @@ class ProductViewSet(viewsets.ViewSet):
         except (TypeError, ValueError):
             raise NotFound("Product not found.")
 
-        product = store.get_product(product_id)
-        if product is None:
-            raise NotFound("Product not found.")
+        try:
+            product = Product.objects.get(pk=product_id)
+        except Product.DoesNotExist as exc:
+            raise NotFound("Product not found.") from exc
 
         serializer = ProductDetailSerializer(instance=product)
         return Response(serializer.data)

@@ -1,16 +1,13 @@
 import pytest
 from rest_framework import status
 
-from catalog import store
 from catalog.models import Product
 from orders.models import Order
 
 
 @pytest.fixture
 def product(db):
-    p = Product.objects.create(external_id=1, title="Sword", description="d", price="19.99", location="JO")
-    store.load_products()
-    return p
+    return Product.objects.create(external_id=1, title="Sword", description="d", price="19.99", location="JO")
 
 
 class TestOrders:

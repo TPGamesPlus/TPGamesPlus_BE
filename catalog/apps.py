@@ -33,6 +33,11 @@ class CatalogConfig(AppConfig):
 
         try:
             from django.core.management import call_command
+            from django.core.management.base import CommandError
+
             call_command("import_products")
+        except CommandError:
+            # Invalid/missing CSV must fail startup so a bad file cannot deploy.
+            raise
         except Exception:
             logger.warning("Startup CSV import skipped (DB likely not migrated yet)", exc_info=True)
