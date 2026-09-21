@@ -3,8 +3,10 @@ from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schem
 from rest_framework import mixins, status, viewsets
 from rest_framework.response import Response
 
+from orders.mail import attach_receipt_email_on_close, should_send_receipt_email
 from orders.models import Order
 from orders.serializers import OrderCreateSerializer, OrderReceiptSerializer
+from orders.vouchers import create_purchased_order
 
 _RECEIPT_EXAMPLE = {
     "id": 1,
@@ -37,7 +39,10 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.
 
     @extend_schema(
         summary="Buy a product",
-        description="Creates an order for exactly one product (quantity is always 1) and returns a receipt.",
+        description=(
+            "Creates an order for exactly one product (quantity is always 1) and returns a receipt. "
+            "A voucher is stored on the order; a receipt email is sent after this response is delivered."
+        ),
         request=OrderCreateSerializer,
         responses={201: OrderReceiptSerializer},
         examples=[
@@ -51,13 +56,11 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, viewsets.
         product = serializer.validated_data["product"]
 
         with transaction.atomic():
-            order = Order.objects.create(
-                user=request.user,
-                product=product,
-                product_title=product.title,
-                unit_price=product.price,
-                location=product.location,
-            )
+            order = create_purchased_order(user=request.user, product=product)
 
         receipt = OrderReceiptSerializer(order)
-        return Response(receipt.data, status=status.HTTP_201_CREATED)
+        response = Response(receipt.data, status=status.HTTP_201_CREATED)
+        # Mail starts from response.close() after the body is sent — not during this request.
+        if should_send_receipt_email(request.user):
+            attach_receipt_email_on_close(response, order.pk)
+        return response

@@ -8,6 +8,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--username", required=True)
         parser.add_argument("--password", required=True)
+        parser.add_argument(
+            "--email",
+            default="",
+            help="Registered email used for order receipt delivery.",
+        )
 
     def handle(self, *args, **options):
         User = get_user_model()
@@ -15,7 +20,10 @@ class Command(BaseCommand):
 
         user, created = User.objects.get_or_create(username=username)
         user.set_password(options["password"])
+        if options["email"]:
+            user.email = options["email"]
         user.save()
 
         action = "Created" if created else "Updated"
-        self.stdout.write(self.style.SUCCESS(f"{action} demo user '{username}'"))
+        extra = f" ({user.email})" if user.email else ""
+        self.stdout.write(self.style.SUCCESS(f"{action} demo user '{username}'{extra}"))

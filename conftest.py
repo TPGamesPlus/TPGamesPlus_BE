@@ -26,6 +26,13 @@ def other_user(db):
     return get_user_model().objects.create_user(username="bob", password="pass12345")
 
 
+@pytest.fixture
+def email_user(db):
+    return get_user_model().objects.create_user(
+        username="carol", password="pass12345", email="carol@example.com"
+    )
+
+
 def _login(client, username, password):
     response = client.post("/api/auth/login/", {"username": username, "password": password}, format="json")
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
@@ -40,3 +47,8 @@ def auth_client(api_client, user):
 @pytest.fixture
 def other_auth_client(other_user):
     return _login(APIClient(), "bob", "pass12345")
+
+
+@pytest.fixture
+def email_auth_client(email_user):
+    return _login(APIClient(), "carol", "pass12345")

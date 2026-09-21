@@ -1,0 +1,13 @@
+Tamatem Plus — Order Confirmed
+
+Order #: {{ order.pk }}
+Product: {{ order.product_title }}
+Price: {{ formatted_price }}
+Location: {{ location_label }}
+Date: {{ formatted_date }}
+Voucher status: {{ order.voucher_status }}
+
+Voucher redeem code (select and copy):
+{{ order.voucher_redeem_code }}
+
+Thank you for buying from Tamatem Plus.

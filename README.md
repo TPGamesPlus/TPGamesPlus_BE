@@ -22,6 +22,7 @@ pip install -r requirements.txt
 # 3. Configure environment
 Copy-Item .env.example .env
 # edit .env if you need different DB credentials/ports
+# set SENDGRID_API_KEY and SENDGRID_FROM_EMAIL to enable receipt emails
 
 # 4. Start PostgreSQL
 docker compose up -d db
@@ -30,7 +31,7 @@ docker compose up -d db
 python manage.py migrate
 
 # 6. Seed a demo user for login/grading
-python manage.py create_demo_user --username demo --password demoPass123!
+python manage.py create_demo_user --username demo --password demoPass123! --email demo@example.com
 
 # 7. Run the server
 python manage.py runserver
@@ -60,7 +61,7 @@ All endpoints except login/refresh/docs require `Authorization: Bearer <access_t
 | POST | `/api/auth/refresh/` | body `{"refresh"}` → `{access}` |
 | GET | `/api/products/` | `?page=&page_size=&location=JO\|SA&title=&min_price=&max_price=&ordering=price\|-price` (page_size default 10, max 50). Response includes `facets: {titles, min_price, max_price}` |
 | GET | `/api/products/{id}/` | product detail |
-| POST | `/api/orders/` | body `{"product": <id>}` → creates an order, returns a receipt |
+| POST | `/api/orders/` | body `{"product": <id>}` → creates an order, returns a receipt (voucher is stored and emailed, not returned in JSON) |
 | GET | `/api/orders/{id}/` | re-fetch a receipt (only your own orders; 404 otherwise) |
 | GET | `/api/docs/` | Swagger UI (public) |
 | GET | `/api/schema/` | raw OpenAPI schema (public) |
@@ -115,3 +116,5 @@ Error responses are normalized to:
 - **Product list `page_size` is capped at 50** (`core/pagination.py`) so a caller can't request an unbounded result set.
 - **Product list filters** (`title`, `min_price`, `max_price`, `ordering=price|-price`) run in the database **before** pagination. The same response includes `facets` so the UI can populate a title dropdown and price slider without shrinking those controls when a price range is applied.
 - **Login is rate-limited** (`AnonRateThrottle`, 5/min) as basic brute-force protection, since credentials are the only gate into the API.
+- **Voucher codes** are generated at purchase from the game title initials, a 4-digit time-based number split around a random special character (`!@#$%&`) and a trailing `a-z` letter. They are stored as `NEW` and are **not** included in the order JSON.
+- **Receipt email is best-effort.** After the order is committed and the `201` body has been sent (`HttpResponse.close`), SendGrid delivers an HTML receipt to `User.email`. If email, `SENDGRID_API_KEY`, or `SENDGRID_FROM_EMAIL` is missing — or SendGrid fails — the purchase still stands and the customer simply does not get the email. Seed a recipient with `create_demo_user --email`.

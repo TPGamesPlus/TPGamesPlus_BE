@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tamatem Plus receipt</title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#0C0E1E;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#FFFFFF;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0C0E1E;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;background-color:#151830;border-radius:16px;overflow:hidden;">
+            <tr>
+              <td style="height:4px;background-color:#00C288;font-size:0;line-height:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:28px 28px 8px 28px;">
+                {% if has_logo %}
+                <img src="cid:{{ logo_cid }}" alt="Tamatem Plus" width="72" height="72" style="display:block;border:0;outline:none;" />
+                {% else %}
+                <p style="margin:0;color:#00C288;font-size:18px;font-weight:700;letter-spacing:0.5px;">Tamatem Plus</p>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:8px 28px 20px 28px;">
+                <h1 style="margin:0;color:#FFFFFF;font-size:24px;font-weight:700;">Order Confirmed</h1>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:0 28px 24px 28px;">
+                {% if has_item_image %}
+                <img src="cid:{{ item_cid }}" alt="{{ order.product_title }}" width="180" style="display:block;border:0;outline:none;border-radius:12px;max-width:180px;height:auto;" />
+                {% else %}
+                <table role="presentation" width="180" cellpadding="0" cellspacing="0" border="0" style="background-color:#1E2243;border-radius:12px;">
+                  <tr>
+                    <td align="center" style="padding:36px 12px;color:#00C288;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+                      {{ order.product_title }}
+                    </td>
+                  </tr>
+                </table>
+                {% endif %}
+              </td>
+            </tr>
+            {% include "orders/emails/_receipt_row.html" with label="Order #" value=order.pk %}
+            {% include "orders/emails/_receipt_row.html" with label="Product" value=order.product_title %}
+            {% include "orders/emails/_receipt_row.html" with label="Price" value=formatted_price %}
+            {% include "orders/emails/_receipt_row.html" with label="Location" value=location_label %}
+            {% include "orders/emails/_receipt_row.html" with label="Date" value=formatted_date %}
+            {% include "orders/emails/_receipt_row.html" with label="Voucher status" value=order.voucher_status %}
+            <tr>
+              <td style="padding:8px 28px 8px 28px;">
+                <p style="margin:0 0 8px 0;color:#8E94B2;font-size:14px;">Voucher redeem code</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1E2243;border-radius:10px;">
+                  <tr>
+                    <td align="center" style="padding:16px 12px;font-family:Consolas,Courier New,monospace;font-size:22px;letter-spacing:2px;color:#FFFFFF;font-weight:700;-webkit-user-select:all;user-select:all;">
+                      {{ order.voucher_redeem_code }}
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:10px 0 0 0;color:#8E94B2;font-size:13px;">
+                  Select the code above and copy it (Ctrl+C / Cmd+C).
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 28px 28px 28px;color:#8E94B2;font-size:12px;text-align:center;">
+                Thank you for buying from Tamatem Plus.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

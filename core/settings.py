@@ -179,3 +179,8 @@ SPECTACULAR_SETTINGS = {
 # django-cors-headers
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
 
+# SendGrid receipt emails (best-effort; purchase succeeds even when these are unset)
+SENDGRID_API_KEY = env("SENDGRID_API_KEY", default="")
+SENDGRID_FROM_EMAIL = env("SENDGRID_FROM_EMAIL", default="")
+SENDGRID_FROM_NAME = env("SENDGRID_FROM_NAME", default="Tamatem Plus")
+
